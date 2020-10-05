@@ -1,9 +1,6 @@
 package com.example.REST.service.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
@@ -11,7 +8,9 @@ import java.util.Objects;
 public class Customer {
 
     private @Id @GeneratedValue Long id;
+    @Column(name = "firstname", nullable = false)
     private String firstname;
+    @Column(name = "lastname", nullable = false)
     private String lastname;
 
     public Customer() {

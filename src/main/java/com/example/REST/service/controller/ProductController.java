@@ -3,6 +3,7 @@ package com.example.REST.service.controller;
 import com.example.REST.service.*;
 import com.example.REST.service.expection.CustomerNotFoundException;
 import com.example.REST.service.expection.ProductNotFoundException;
+import com.example.REST.service.model.Customer;
 import com.example.REST.service.model.Product;
 import com.example.REST.service.model.assembler.ProductModelAssembler;
 import com.example.REST.service.repository.ProductRepository;
@@ -57,17 +58,32 @@ public class ProductController {
         return assembler.toModel(product);
     }
 
-//    @DeleteMapping("/orders/{id}")
-//    ResponseEntity<?> delete(@PathVariable Long id) {
-//        Product product = productRepository.findById(id)
-//                .orElseThrow(()-> new ProductNotFoundException(id));
-//
-//        return ResponseEntity
-//                .status(HttpStatus.METHOD_NOT_ALLOWED)
-//                .header(HttpHeaders.CONTENT_TYPE, MediaTypes.HTTP_PROBLEM_DETAILS_JSON_VALUE)
-//                .body(Problem.create()
-//                        .withTitle("Method not allowed")
-//                        .withDetail("You can't complete an order that is in the " + product.getStatus() + " status"));
-//
-//    }
+    @PutMapping("/products/{id}")
+    public ResponseEntity<?> replaceProduct(@RequestBody Product newProduct, @PathVariable Long id) {
+        Product updatedProduct = productRepository.findById(id)
+                .map(product -> {
+                    product.setName(newProduct.getName());
+                    product.setDescription(newProduct.getDescription());
+                    product.setPrice(newProduct.getPrice());
+                    return productRepository.save(product);
+                })
+                .orElseGet(() -> {
+                    newProduct.setId(id);
+                    return productRepository.save(newProduct);
+                });
+
+        EntityModel<Product> entityModel = assembler.toModel(updatedProduct);
+        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
+    }
+
+    @DeleteMapping("/products/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        if (productRepository.findById(id).isPresent()) {
+            productRepository.deleteById(id);
+        } else {
+            throw new ProductNotFoundException(id);
+        }
+        return ResponseEntity.noContent().build();
+    }
 }
